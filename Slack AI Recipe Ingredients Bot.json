@@ -1,0 +1,257 @@
+{
+  "name": "Slack AI Recipe Ingredients Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "trigger": [
+          "message"
+        ],
+        "channelId": {
+          "__rl": true,
+          "value": "C0CAHC3V5D3",
+          "mode": "list",
+          "cachedResultName": "recipe-assistant"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        -32
+      ],
+      "id": "520a63f1-3be8-4c52-9e26-b4074d31d329",
+      "name": "Slack Trigger",
+      "webhookId": "bd49f335-7671-4fb0-8ade-635a766e5170",
+      "credentials": {
+        "slackApi": {
+          "id": "7SCNM3yfmf1MEfen",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a328ec9-2d8d-4a10-869a-c4d6620256b9",
+              "name": "recipe",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "b6c56614-f8e0-4481-bc08-beffafe787e3",
+              "name": "channel_id",
+              "value": "={{ $json.channel }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        16,
+        -32
+      ],
+      "id": "93e1a050-36ad-45ec-b23b-44c550d846bf",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a friendly AI Recipe Assistant.\n\nUser Request: {{ $json.recipe }}\n\nInstructions:\n1. Identify the recipe name from the user's message,\n   ignoring greetings and filler words.\n\n2. Check whether the user specified the number\n   of people or servings.\n\n3. If the number of people is missing,\n   DO NOT generate ingredients.\n   Reply only:\n   \"How many people are you cooking for?\n   Please mention the recipe name and number\n   of people (example: Egg Curry for 4 people).\"\n\n4. If the recipe name is missing or unclear,\n   ask the user to specify the dish.\n\n5. If both recipe name and serving size are\n   available, generate the complete ingredient\n   list with approximate quantities for exactly\n   that many people.\n\n6. Display the heading as:\n   *Recipe Name – Ingredients for X People*\n\n7. Put each ingredient on a separate line\n   beginning with •.\n\n8. Keep the response short and practical.\n\n9. Do not include cooking instructions\n   or unrelated text.\n\n10. Return only the Slack-ready response.\n\nExamples:\nInput: Hi, I need a recipe for egg curry\nOutput: How many people are you cooking for?\nPlease mention the recipe name and number\nof people (example: Egg Curry for 4 people).\n\nInput: Egg Curry for 6 people\nOutput: *Egg Curry – Ingredients for 6 People*\nfollowed by ingredients and quantities.\n\nInput: Veg Biryani\nOutput: How many people are you cooking for?\nPlease mention the recipe name and number\nof people (example: Veg Biryani for 4 people).",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        208,
+        -32
+      ],
+      "id": "0cc06338-21a1-4773-9e5a-a9cbbf0ea3fc",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        176
+      ],
+      "id": "40fa5c54-0cff-41e1-8008-99c7410b2575",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "YwlZmpFN7uUNzRzf",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "=channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0CAHC3V5D3",
+          "mode": "list",
+          "cachedResultName": "recipe-assistant"
+        },
+        "user": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "text": "={{ $json.text }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        560,
+        -32
+      ],
+      "id": "67c593a1-46e0-4913-a528-c9fecf5ef443",
+      "name": "Send a message",
+      "webhookId": "6fe39949-d08d-42eb-8969-5a59b58a425b",
+      "credentials": {
+        "slackApi": {
+          "id": "7SCNM3yfmf1MEfen",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3c9ecb73-8889-498f-9c00-56cad25e580d",
+              "leftValue": "={{ $json.bot_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c697a340-6e24-41e6-91cc-b73d6d0376eb",
+              "leftValue": "={{ $json.subtype }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -192,
+        -32
+      ],
+      "id": "b70b9288-d53d-403b-95ba-e0a9f94a54b0",
+      "name": "Filter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Slack Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "41de78e9-13a3-444e-8cbe-8debd71a384e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cd09e1c8e87f207ee1a24eea42b30d5ef32639b35ed8be3223ed432d736f9779"
+  },
+  "nodeGroups": [],
+  "id": "yzd5qJJi6VhHyS7v",
+  "tags": []
+}
