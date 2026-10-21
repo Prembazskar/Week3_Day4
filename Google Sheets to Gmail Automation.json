@@ -1,0 +1,133 @@
+{
+  "name": "Google Sheets to Gmail Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        0
+      ],
+      "id": "ae95828d-b061-4456-9a2e-fc80d9772d9d",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1by6psOkOgb5Qz_Ryx9pKYBzFx-I4Ro5d5vEwwaZEvHU/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1by6psOkOgb5Qz_Ryx9pKYBzFx-I4Ro5d5vEwwaZEvHU/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -176,
+        0
+      ],
+      "id": "ef6b84d3-f0f8-4800-a523-2af962e9ac70",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TAOJIViMEb6N54cy",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst rows = $input.all().map(item => item.json);\n\n// Remove extra spaces from Google Sheets column names\nconst cleanRows = rows.map(row => {\n  const cleaned = {};\n  for (const key of Object.keys(row)) {\n    cleaned[key.trim().toLowerCase()] = row[key];\n  }\n  return cleaned;\n});\n\n// Keep rows that contain student information\nconst validRows = cleanRows.filter(row =>\n  [row.name, row.course, row.status].some(\n    value => String(value ?? \"\").trim() !== \"\"\n  )\n);\n\n// Stop if no valid data exists\nif (validRows.length === 0) {\n  return [];\n}\n\n// Format each student\nconst details = validRows.map((row, index) =>\n  `${index + 1}. Name: ${row.name || \"Not provided\"}\nCourse: ${row.course || \"Not provided\"}\nStatus: ${row.status || \"Not provided\"}`\n).join(\"\\n\\n\");\n\n// Create email content\nconst subject = \"Data Summary from Google Sheet\";\n\nconst body = `Hi,\n\nHere is the latest data from the sheet:\n\n${details}\n\nTotal Students: ${validRows.length}\n\nRegards,\nYour Automation Bot`;\n\nreturn [{json:{subject,body}}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        0
+      ],
+      "id": "ba2b9636-2dc8-4637-aded-e300478f0372",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sendTo": "prembazskar@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        272,
+        0
+      ],
+      "id": "ed2dc10b-ff78-4455-88cf-d2098c596dd8",
+      "name": "Send a message",
+      "webhookId": "532b9a0e-b9dc-4702-ac3b-98d5dd2ca0b5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PwiEcfMxUU5CIK1a",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "147bb4f4-4c93-4426-8538-03a90485b9ec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cd09e1c8e87f207ee1a24eea42b30d5ef32639b35ed8be3223ed432d736f9779"
+  },
+  "nodeGroups": [],
+  "id": "8qA4OOV6ZevzpVjA",
+  "tags": []
+}
